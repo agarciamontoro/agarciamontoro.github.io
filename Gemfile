@@ -11,7 +11,7 @@ ruby RUBY_VERSION
 # Athena theme
 gem "jekyll-athena"
 
-# To upgrade, run `bundle update github-pages`.
+# Github pages
 gem "github-pages", group: :jekyll_plugins
 
 # If you have any plugins, put them here!
