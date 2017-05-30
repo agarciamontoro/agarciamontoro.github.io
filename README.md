@@ -1,5 +1,4 @@
 # Personal site
-------------
 
 My personal site, generated with Jekyll and based on the awesome [Athena][l_Athena] theme.
 
