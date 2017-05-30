@@ -9,7 +9,7 @@ ruby RUBY_VERSION
 #
 
 # Athena theme
-gem "jekyll-athena"
+# gem "jekyll-athena"
 
 # Github pages
 gem "github-pages", group: :jekyll_plugins
