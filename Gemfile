@@ -7,10 +7,6 @@ ruby RUBY_VERSION
 #
 #     bundle exec jekyll serve
 #
-
-# Athena theme
-# gem "jekyll-athena"
-
 # Github pages
 gem "github-pages", group: :jekyll_plugins
 

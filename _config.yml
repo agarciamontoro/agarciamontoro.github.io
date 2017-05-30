@@ -27,7 +27,6 @@ mastodon_instance: kosmos.social
 
 # Build settings
 markdown: kramdown
-# theme: jekyll-athena
 gems:
   - jekyll-feed
 exclude:
