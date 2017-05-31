@@ -2,7 +2,7 @@
 layout: post
 title: Google Summer of Code, the Beginning
 lang: en
-tags: [gsoc]
+tags: [GSoC, ROOT]
 ---
 
 Early this month I received an email whose subject read<!--more--> "GSoC 2017:
