@@ -41,7 +41,7 @@ The idea is to finish the on-going work in this direction, having a completely v
 
 I do not want to bore you with technical details now ---you will have plenty of those in the next posts---, but if you want to know anything else about the proposal, read its abstract in the [GSoC site][l_abstract]. If you *really* want to read the entire proposal, [go ahead][l_proposal].
 
-Stay tuned for future posts, I will try to explain what I am doing and how I do it with all the tricky details. Until then, **happy libre hacking!**
+Stay tuned for future posts, I will try to explain what I am doing, and how I do it, with all the tricky details. Until then, **happy libre hacking!**
 
 
 <!--
