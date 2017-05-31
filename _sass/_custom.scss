@@ -1,3 +1,12 @@
+::-moz-selection {
+    background: black;
+    color: white;
+}
+::selection {
+    background: black;
+    color: white;
+}
+
 .highlight pre {
     padding-top: 10px;
     padding-bottom: 10px;

@@ -10,6 +10,9 @@ ruby RUBY_VERSION
 # Github pages
 gem "github-pages", group: :jekyll_plugins
 
+# Adds draft, post, publish, unpublish and page subcommands to bundle exec jekyll
+gem 'jekyll-compose', group: [:jekyll_plugins]
+
 # If you have any plugins, put them here!
 # group :jekyll_plugins do
 #    gem "jekyll-feed", "~> 0.6"

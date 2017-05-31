@@ -4,5 +4,4 @@
     <a class="link-primary" title="{{ post.url | prepend: site.baseurl }}" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
   </h2>
   <a class="no-underline-hover h5 block py-1 mb-1" title="{{ post.url | prepend: site.baseurl }}" href="{{ post.url | prepend: site.baseurl }}">{{ post.date | date: "%b %-d, %Y" }}</a>
-  <p>{{ post.excerpt | remove: '<p>' | remove: '</p>' }}&hellip;</p>
 </div>

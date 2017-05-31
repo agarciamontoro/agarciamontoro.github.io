@@ -18,12 +18,15 @@ email: alejandro.garciamontoro@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
   I am a libre software advocate, a computer scientist and a mathematician; probably in that specific order.
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "agarciamontoro.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://agarciamontoro.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 excerpt_separator: <!--more-->
+
+# Usernames in the socials
 twitter_username:  xiroux
 github_username:   agarciamontoro
 mastodon_username: xiroux
 mastodon_instance: kosmos.social
+telegram_username: agarciamontoro
 
 # Build settings
 markdown: kramdown
