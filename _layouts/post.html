@@ -9,7 +9,7 @@ layout: default
       <p class="h4 lh-condensed"><time datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">{{ page.date | date: "%b %-d, %Y" }}</time></p>
       <div class="col-1 sm-width-full border-top-thick">
       </div>
-      <i class="mt-2 fa fa-tags"></i><code>{% for tag in page.tags %}{{ tag }} {% endfor %}</code>
+      <code>{% for tag in page.tags %}{{ tag }}<i class="mt-2 fa fa-tag"></i> {% endfor %}</code>
     </div>
   </div>
 
