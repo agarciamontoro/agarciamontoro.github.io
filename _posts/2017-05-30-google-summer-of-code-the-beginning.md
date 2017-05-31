@@ -25,13 +25,13 @@ Ok, so basically **it is a thingy to do cool stuff with your cool data**, really
 
 ![CMS 10 example](/assets/img/CMS10.png)
 
-Indeed, ROOT is widely used in the CERN scientific community as a full-stack solution to analyse, interpret and visualize the data acquired from all the experiments held there.
+Indeed, ROOT is widely used in the CERN scientific community as a full-stack solution to analyse, interpret and visualise the data acquired from all their experiments.
 
 Furthermore, ROOT comes with this shiny, breathtaking, awesome C++ interpreter. Please, take a look and enjoy the black magic behind interpreting C++ on the fly:
 
 ![ROOT interpreter](/assets/img/root_interpreter.png)
 
-Isn't it beautiful? \<3
+Isn't it beautiful? \<3 By the way, that code above is from the useful [ROOT Primer][l_manual], where you can learn all about its basics.
 
 ## The proposal
 
@@ -41,7 +41,7 @@ The idea is to finish the on-going work in this direction, having a completely v
 
 I do not want to bore you with technical details now ---you will have plenty of those in the next posts---, but if you want to know anything else about the proposal, read its abstract in the [GSoC site][l_abstract]. If you *really* want to read the entire proposal, [go ahead][l_proposal].
 
-Stay tuned for the future posts, I will try to explain what I am doing and how I do it. Until then, **happy libre hacking!**
+Stay tuned for future posts, I will try to explain what I am doing and how I do it with all the tricky details. Until then, **happy libre hacking!**
 
 
 <!--
@@ -57,3 +57,4 @@ cmake -Dbuiltin_veccore=ON -Dvc=ON -Dimt=ON -Droottest=ON -Dtesting=ON \
 [l_daft-punk]: https://www.youtube.com/watch?v=gAjR4_CbPpQ
 [l_abstract]: https://summerofcode.withgoogle.com/projects/#5874058599071744
 [l_proposal]: /assets/fls/proposal.pdf
+[l_manual]: https://root.cern.ch/root/htmldoc/guides/primer/ROOTPrimer.html
