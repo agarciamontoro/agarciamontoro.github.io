@@ -31,6 +31,8 @@ email:             alejandro *dot* garciamontoro *at* gmail *dot* com
 
 # Build settings
 markdown: kramdown
+kramdown:
+  auto_ids: true # Auto-generate ID's for headings
 gems:
   - jekyll-feed
 exclude:
