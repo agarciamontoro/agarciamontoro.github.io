@@ -21,19 +21,23 @@ In a few words, my work in ROOT can be summarised as the generalization of the f
 
 ## What Code Have Been Merged?
 
-At the end of the programme, two pull requests (PR) were merged:
+At the end of the programme, three pull requests (PR) were merged:
 
 * [Gradient interfaces templated.](https://github.com/root-project/root/pull/793)
 
-The most important work is done in this PR, where the gradient interfaces are generalized and the parallelized and vectorized versions of [`Chi2`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/Chi2FCN.h), [`LogLikelihood`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/LogLikelihoodFCN.h) and [`PoissonLikelihood`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/PoissonLikelihoodFCN.h) gradient evaluations are implemented.
+The most important work is done in this PR, where the gradient interfaces are generalized and the parallelized and vectorized versions of [`Chi2`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/Chi2FCN.h), [`LogLikelihood`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/LogLikelihoodFCN.h) and [`PoissonLikelihood`](https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/PoissonLikelihoodFCN.h) gradient evaluations are implemented. The whole PR was squashed into [this one commit](https://github.com/root-project/root/commit/913ac6a71bc1f0874e5ce8c49933e0ef2b5b9dd7) when it got merged into `master`.
 
 * [Fix execution policy error when IMT is OFF.](https://github.com/root-project/root/pull/871)
 
-The commit in this PR just fixed a bug caused by the changes introduced in the first one.
+After the first PR was merged, we saw that some tests failed if `IMT` was disabled. The problem was that those tests tried to use the multithread execution policy in `FitUtil` even if no parallelization was enabled. This commit, that you can see [here](https://github.com/root-project/root/commit/8a2c336b5bfe6a6667df29fda629067f25c0313e) in the `master` branch, fixed this problem forcing the execution policy to be `ROOT::Fit::ExecutionPolicy::kSerial` while warning the user that such a change has been made.
+
+* [Add padding to all vectors in FitData and its children.](https://github.com/root-project/root/pull/896)
+
+The classes storing the data in the fitting algorithms ---`FitData`, `BinData` and `UnBinData`--- play an important role in the vectorization. In order to ease the vectorization of the algorithms, this PR adds padding to every vector in these classes: the ones storing the coordinates, the data and the errors; assuring the length of the vectors is a multiple of the `SIMD` vector size. The commit merging this PR in the ROOT repo can be found [here](https://github.com/root-project/root/commit/a61beeca70473d10d01a53f3f051e2a3d52ec4b9).
 
 ## What Code Has *Not* Been Merged?
 
-Four PRs remained unmerged at the end of the programme, but they contain useful work that should be used after GSoC finishes:
+Three PRs remained unmerged at the end of the programme, but they contain useful work that should be used after GSoC finishes:
 
 * [Adaptation of fitting interfaces to templated gradient functions](https://github.com/root-project/root/pull/890)
 
@@ -47,13 +51,9 @@ This second unmerged PR is part of an important ongoing work: the implementation
 
 This PR adds tests to check that the evaluations of the gradient of multidimensional functions, implemented in the first merged PR, are correct.
 
-* [Add padding to all vectors in FitData and its children.](https://github.com/root-project/root/pull/896)
-
-The classes storing the data in the fitting algorithms ---`FitData`, `BinData` and `UnBinData`--- play an important role in the vectorization. In order to ease the vectorization of the algorithms, this PR adds padding to every vector in these classes: the ones storing the coordinates, the data and the errors; assuring the length of the vectors is a multiple of the `SIMD` vector size.
-
 ### What Is Left To Do?
 
-After GSoC finishes, the ROOT developers may want to complete some of the work I started during the summer that did not get merged before the final evaluation. In particular, the unmerged PRs should be finished and merged: the bug stopping the first PR to be merged should be fixed, the remaining functions in `TMath` should be vectorized and the failing test of the third PR should be inspected and the bug causing it should be fixed. The last PR can be merged without further work.
+After GSoC finishes, the ROOT developers may want to complete some of the work I started during the summer that did not get merged before the final evaluation. In particular, the unmerged PRs should be finished and merged: the bug stopping the first PR to be merged should be fixed, the remaining functions in `TMath` should be vectorized and the failing test of the last PR should be inspected and the bug causing it should be fixed.
 
 # Detailed Final Report
 
@@ -146,9 +146,11 @@ Double_t solution[4];
 fFitter1->Gradient(fParams, solution);
 {% endhighlight %}
 
-That this one last line works may seem trivial or unimportant, but it has been *a lot* of work, but the results are really worth it! Check the following graph, where we can see the speedups of the new (parallelized and vectorized) versions of the three gradient evaluations with this same case we have described:
+That this one last line works may seem trivial or unimportant, but it has been *a lot* of work, but the results are really worth it! Check the following graph, where we can see the speedups of the new (parallelized and vectorized) versions of the three gradient evaluations with this same case we have described.
 
 ![Speedups](/assets/img/speedups.png)
+
+The orange bars show the speedup when using the parallel implementation. The yellow ones show the speedup of the vectorized implementations; this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the parallel *and* vectorized implemetations,
 
 ## Dissecting the Commits
 
@@ -156,7 +158,7 @@ That this one last line works may seem trivial or unimportant, but it has been *
 
 That last graph was cool, but the work behind it was hard. Let us now describe with detail the main work of this project, implemented in [this PR](https://github.com/root-project/root/pull/793). Let's inspect every commit to see what I did and why:
 
-* [Commit 16cbcb5 ](https://github.com/root-project/root/pull/793/commits/16cbcb5b3143f588bc01c06bc093192b236acad8): The very first commit I pushed to my ROOT fork implemented a parallelized version of the method `FitUtil::EvaluateChi2Gradient`. This was pretty direct, as I just had to add a new version of the method using the parallelization techniques provided by ROOT; in particular, `ROOT::TThreadExecutor::MapReduce` and its friends. This was implemented following the example of the method `FitUtil::EvaluateChi2Gradient`, which was already parallelized in the `Evaluate` struct. The finished implementation can be seen in the file `FitUtil.cxx`, method `FitUtil::EvaluateChi2Gradient`.
+* [Commit 16cbcb5 ](https://github.com/root-project/root/pull/793/commits/16cbcb5b3143f588bc01c06bc093192b236acad8): The very first commit I pushed to my ROOT fork implemented a parallelized version of the method `FitUtil::EvaluateChi2Gradient`. This was pretty direct, as I just had to add a new version of the method using the parallelization techniques provided by ROOT; in particular, `ROOT::TThreadExecutor::MapReduce`. This was implemented following the example of the method `FitUtil::EvaluateChi2`, which was already parallelized in the `Evaluate` struct. The finished implementation can be seen in the file `FitUtil.cxx`, method `FitUtil::EvaluateChi2Gradient`.
 * [Commit b705cf4 ](https://github.com/root-project/root/pull/793/commits/b705cf489f85d8151dd626f7c011fdfd76ce7b54): This commit implemented a really important work, as all the remaining commits depended greatly on it: the generalization of the gradient interfaces; namely:
   * In `IFunction.h`, the interface `IGradient{,Function}MultiDim` was templated, keeping its `double` specialization in `IFunctionFwd.h` as a typedef that matched the old name in order to preserve backwards compatibility.
   * In `ParamFunction.h`, the interface `IParametricGradFunctionMultiDimTempl` was adapted to use the new `IGradientFunctionMultiDimTempl`, and the gradient-related methods were templated as well.
