@@ -51,7 +51,7 @@ This second unmerged PR is part of an important ongoing work: the implementation
 
 This PR adds tests to check that the evaluations of the gradient of multidimensional functions, implemented in the first merged PR, are correct.
 
-### What Is Left To Do?
+## What Is Left To Do?
 
 After GSoC finishes, the ROOT developers may want to complete some of the work I started during the summer that did not get merged before the final evaluation. In particular, the unmerged PRs should be finished and merged: the bug stopping the first PR to be merged should be fixed, the remaining functions in `TMath` should be vectorized and the failing test of the last PR should be inspected and the bug causing it should be fixed.
 
@@ -146,11 +146,7 @@ Double_t solution[4];
 fFitter1->Gradient(fParams, solution);
 {% endhighlight %}
 
-That this one last line works may seem trivial or unimportant, but it has been *a lot* of work, but the results are really worth it! Check the following graph, where we can see the speedups of the new (parallelized and vectorized) versions of the three gradient evaluations with this same case we have described.
-
-![Speedups](/assets/img/speedups.png)
-
-The orange bars show the speedup when using the parallel implementations. The yellow ones show the speedup of the vectorized implementations; to be more specific, this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the implementations that use both the parallel *and* vectorized techniques. As you can see, in the best case we can obtain evaluations 6 times faster than before.
+That this one last line works may seem trivial or unimportant, but it has been *a lot* of work, but the results are really worth it! Check out the [Result Analysis]({{ site.baseurl }}{% post_url 2017-08-25-gsoc-final-thoughts %}#result-analysis) section to a deeper study of the benchmarks done.
 
 ## Dissecting the Commits
 
@@ -200,6 +196,44 @@ Just to finish this report, we should talk about the ongoing work of vectorizing
 
 
 These versions, implemented in [`TMathVectorized.cxx`](https://github.com/root-project/root/pull/655/files#diff-b2fef511d71d4d2d8920b0a596c42a4e) are good examples to know how to keep vectorizing all functions in `TMath`.
+
+## Result Analysis
+
+In order to analyse the efficiency of the work done during the summer, some benchmarks have been implemented. We are gonna study here the test implemented in [`testGradient.cxx`](https://github.com/root-project/root/blob/master/math/mathcore/test/testGradient.cxx), that works also as a benchmark, measuring the speedups of the new implementations.
+
+First of all, the specs of the machine where the implementations were benchmarked:
+* Vectorized intruction set: [SSE4.2](https://en.wikipedia.org/wiki/SSE4#SSE4.2)
+* Number of cores: 4
+* Number of threads : 8
+
+With this machine, I have benchmarked 9 different situations, all of them defined in `testGradient.cxx` by using the three different scenarios for the three gradient evaluations modified ---`Chi2`, `LogLikelihood` and `PoissonLikelihood`---:
+* Scalar and multithread evaluation; i.e., the evaluation of the gradient is parallelized only in the data level by using several threads.
+* Vectorial and serial evaluation; i.e., the evaluation of the gradient is parallelized in the instruction level by using vectorization techniques.
+* Vectorial and multithread evaluation; i.e., the evaluation of the gradient is parallelized both in the data and instruction level by using several threads along with vectorization techniques.
+
+Before discussing the numbers obtained, let's see the ideal cases; i.e., how good can the new implementations be.
+
+As the benchmarking machine implementes the SSE4.2 instruction set, the number of elements in a `ROOT::Double_v`, i.e., a *vector* of `double`, is 2. Then, a vectorized implementation of any code can be, at most, **2 times** faster than a scalar implementation.
+
+On the other hand, as the number of cores is 4, a multithread implementation can be, at most, **4 times** faster than a serial implementation. This can be improved by the hyperthreading used by my CPU, that provides at most 8 threads.
+
+Combining these two cases, we know we can get evaluations **8 times** faster than the scalar serial case in an ideal scenario where the vectorization and multithreading do not add any overhead.
+
+The tests measure the time spent in the call of the `Gradient` method of `Chi2FCN`, `LogLikelihoodFCN` and `PoissonLikelihoodFCN`. This measure is repeated 1000 times and the mean is taken. Comparing the time spent in each of the benchmarked cases agains the scalar serial case, the results are summarised in the following graph:
+
+![Speedups](/assets/img/speedups.png)
+
+As you can see, the orange bars show the speedup when using the multithread implementations. The yellow ones show the speedup of the vectorized implementations. Finally, the green bars show the speedups of the implementations that use both the multithread *and* vectorized techniques.
+
+First of all, we can see that the vectorized implementation is nearly ideal, as all the speedups in the yellow bars are near 2. This can be explained because there is no branching in the vectorized implementations of the `Gradient` method and the overhead of the calls to the vectorial instructions is zero compared to the call to the scalar ones. Then, the ideal case is reached and a speedup of ~2 is obtained.
+
+The multithread scenario is however not that close to the ideal case: the speedups obtained with the multithread policy ---orange bars--- are nearly 3, out of the ideal speedup of 4 we could obtain. This in turn lower the expectations for the vectorized *and* multithread case, where we obtain speedups slightly greater than 6 ---green bars---, out of the ideal case of an 8x improvement.
+
+As an initial analysis, it is clear that the calls to `ROOT::TThreadExecutor` methods add some overhead to the implementations, so the ideal case cannot be reached. This is expected; however, further analysis of the multithread case should be done, which would of course improve also the combined scenario.
+
+For example, a future benchmark should measure how the number of chunks in which the data is separated affects the speedups, analyse the exact overhead of the `ROOT::TThreadExecutor` methods and study the `map` function implemented in the evaluations.
+
+In conclusion, although there is still room for some improvement, the benchmark is in general *very* good, and the speedups obtained will be really useful to the final users.
 
 # Conclusions
 
