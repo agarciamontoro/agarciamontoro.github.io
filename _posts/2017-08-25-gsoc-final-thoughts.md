@@ -31,13 +31,13 @@ The most important work is done in this PR, where the gradient interfaces are ge
 
 The commit in this PR just fixed a bug caused by the changes introduced in the first one.
 
-## What Code Have *Not* Been Merged?
+## What Code Has *Not* Been Merged?
 
 Four PRs remained unmerged at the end of the programme, but they contain useful work that should be used after GSoC finishes:
 
 * [Adaptation of fitting interfaces to templated gradient functions](https://github.com/root-project/root/pull/890)
 
-This PR finishes the work of the fitting interfaces generalization, providing the user the possibility to use gradient functions in their fittings. It also adds integration tests to check everything works as a whole.
+This PR completes the work of the fitting interfaces generalization, providing the user the possibility to use gradient functions in their fittings. It also adds integration tests to check everything works as a whole.
 
 * [Vectorization of TMath.](https://github.com/root-project/root/pull/655)
 
@@ -49,23 +49,23 @@ This PR adds tests to check that the evaluations of the gradient of multidimensi
 
 * [Add padding to all vectors in FitData and its children.](https://github.com/root-project/root/pull/896)
 
-The classes storing the data in the fitting algorithms ---`FitData`, `BinData` and `UnBinData`--- play an important role in the vectorization. In order to ease the vectorization of the algorithms, this PR add padding to all coordinate, data and error vectors in these classes, assuring the length of the vectors is a multiple of the `SIMD` vector size.
+The classes storing the data in the fitting algorithms ---`FitData`, `BinData` and `UnBinData`--- play an important role in the vectorization. In order to ease the vectorization of the algorithms, this PR adds padding to every vector in these classes: the ones storing the coordinates, the data and the errors; assuring the length of the vectors is a multiple of the `SIMD` vector size.
 
 ### What Is Left To Do?
 
-The unmerged PRs should be finished and merged; in particular: the bug stopping the first PR to be merged should be fixed, the remaining functions in `TMath` should be vectorized and the failing test of the third PR should be inspected and the bug causing it should be fixed. The last PR can be merged without further work.
+After GSoC finishes, the ROOT developers may want to complete some of the work I started during the summer that did not get merged before the final evaluation. In particular, the unmerged PRs should be finished and merged: the bug stopping the first PR to be merged should be fixed, the remaining functions in `TMath` should be vectorized and the failing test of the third PR should be inspected and the bug causing it should be fixed. The last PR can be merged without further work.
 
 # Detailed Final Report
 
-Ok, so now that you have an overall idea of my summer work, I will describe with details the what, the how and the why of the lines of code written through these months.
+Ok, so now that you have an overall idea of my summer work, I will describe with details and decisions behind the lines of code written through these months.
 
 ## Previous State of ROOT
 
 Before GSoC17, ROOT had a good set of interfaces for fitting data; see, for example, the section [5. Fitting Histograms](https://root.cern.ch/root/htmldoc/guides/users-guide/ROOTUsersGuide.html#fitting-histograms) of the *User's Guide* to make an idea of what ROOT can do for you. However, these interfaces were tied to a specific base type; namely, they worked only with `double`s. Furthermore, the code was first designed to serve as a set of serial algorithms, and parallelization was not taken into account.
 
-Some work has been done before the programme in order to generalize these interfaces and add the possibility to use other types and other execution policies. See, for example, the [`struct Evaluate`]((https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/FitUtil.h#L370)) in `FitUtil.h`, where the evaluations of `Chi2`, `LogLikelihood` and `PoissonLikelihood` functions were adapted to have vectorized and parallelized versions.
+Considerable work has been done before the programme in order to generalize these interfaces and add the possibility to use other types and other execution policies. See, for example, the [`struct Evaluate`]((https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/FitUtil.h#L370)) in `FitUtil.h`, where the evaluations of `Chi2`, `LogLikelihood` and `PoissonLikelihood` functions were adapted to have vectorized and parallelized versions.
 
-However, a lot of work in this direction needed to be done, and my summer has mainly focused in providing the possibility to evaluate the `Chi2`, `LogLikelihood` and `PoissonLikelihood` **gradient** functions.
+However, a lot more work in this direction needed to be done, and my summer has mainly focused on providing the possibility to evaluate vectorized and parallelized vrsions of `Chi2`, `LogLikelihood` and `PoissonLikelihood` **gradient** functions.
 
 ## Using The New Code
 
@@ -87,11 +87,11 @@ static T modelFunction(const T *data, const double *params)
 }
 {% endhighlight %}
 
-First of all, you would need to create a `TF1` to hold your function with initial parameters and a `TH1` to hold your data (here we have randomised data generated from the model function). With the work done during the summer, you can now use data types different to double for your model functions, so let's use here `Double_v`:
+First of all, you would need to create a `TF1` to hold your function with initial parameters and a `TH1` to hold your data (here we have randomised data generated from the model function). With the work done during the summer, you can now use data types different to double for your model functions, so let's use here `ROOT::Double_v`:
 
 {% highlight cpp %}
 // Create TF1 from model function and initialize the fit function
-TF1 fModelFunction("TF1", modelFunction<Double_v>, 100, 200, 4);
+TF1 fModelFunction("TF1", modelFunction<ROOT::Double_v>, 100, 200, 4);
 
 const Double_t fParams[4] = {1, 1000, 7.5, 1.5};
 fModelFunction.SetParameters(fParams);
@@ -106,7 +106,7 @@ fHistogram.FillRandom("TH1", 1000000);
 Now we can use a wrapped `TF1` object to store our fitting function and populate a `BinData` object with the data from the histogram.
 
 {% highlight cpp %}
-ROOT::Math::WrappedMultiTF1Templ<Double_v> fFitFunction(fModelFunction, 1);
+ROOT::Math::WrappedMultiTF1Templ<ROOT::Double_v> fFitFunction(fModelFunction, 1);
 
 ROOT::Fit::BinData fData;
 ROOT::Fit::FillData(fData, &fHistogram, &fModelFunction);
@@ -116,30 +116,34 @@ And now to the fun part! We can create either a `Chi2`, `PoissonLikelihood` or `
 
 {% highlight cpp %}
 using GradFunc = ROOT::Math::IGradientFunctionMultiDimTempl<double>;
-using BaseFunc = ROOT::Math::IParamMultiFunctionTempl<Double_v>;
-
-using ROOT::Fit;
+using BaseFunc = ROOT::Math::IParamMultiFunctionTempl<ROOT::Double_v>;
 
 // You can instantiate a Chi2 fitter...
-Chi2FCN<GradFunc, BaseFunc> fFitter(fData, fFitFunction,
-                                    ExecutionPolicy::kMultithread);
+ROOT::Fit::Chi2FCN<GradFunc, BaseFunc> fFitter1(
+   fData, fFitFunction,
+   ROOT::Fit::ExecutionPolicy::kMultithread
+);
 
 // ... or a PoissonLikelihood fitter...
-PoissonLikelihoodFCN<GradFunc, BaseFunc> fFitter(fData, fFitFunction, 0, true,
-                                                 ExecutionPolicy::kMultithread);
+ROOT::Fit::PoissonLikelihoodFCN<GradFunc, BaseFunc> fFitter2(
+   fData, fFitFunction, 0, true,
+   ROOT::Fit::ExecutionPolicy::kMultithread
+);
 
 // ... or a LogLikelihood fitter.
-LogLikelihoodFCN<GradFunc, BaseFunc> fFitter(fData, fFitFunction, 0, false,
-                                             ExecutionPolicy::kMultithread);
+ROOT::Fit::LogLikelihoodFCN<GradFunc, BaseFunc> fFitter3(
+   fData, fFitFunction, 0, false,
+   ROOT::Fit::ExecutionPolicy::kMultithread
+);
 {% endhighlight %}
 
-Whatever the fitter is, what we can do now is to call its `Gradient` method:
+Whatever the fitter you choose, what we can do now is to call its `Gradient` method:
 
 {% highlight cpp %}
 Double_t solution[4];
 
 // This is where the magic happens <3
-fFitter->Gradient(fParams, solution);
+fFitter1->Gradient(fParams, solution);
 {% endhighlight %}
 
 That this one last line works may seem trivial or unimportant, but it has been *a lot* of work, but the results are really worth it! Check the following graph, where we can see the speedups of the new (parallelized and vectorized) versions of the three gradient evaluations with this same case we have described:
