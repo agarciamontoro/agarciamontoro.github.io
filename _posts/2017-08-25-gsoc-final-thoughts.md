@@ -39,7 +39,7 @@ The classes storing the data in the fitting algorithms ---`FitData`, `BinData` a
 
 Three PRs remained unmerged at the end of the programme, but they contain useful work that should be used after GSoC finishes:
 
-* [Adaptation of fitting interfaces to templated gradient functions](https://github.com/root-project/root/pull/890)
+* [Adaptation of fitting interfaces to templated gradient functions.](https://github.com/root-project/root/pull/890)
 
 This PR completes the work of the fitting interfaces generalization, providing the user the possibility to use gradient functions in their fittings. It also adds integration tests to check everything works as a whole.
 
@@ -57,11 +57,11 @@ After GSoC finishes, the ROOT developers may want to complete some of the work I
 
 # Detailed Final Report
 
-Ok, so now that you have an overall idea of my summer work, I will describe with details and decisions behind the lines of code written through these months.
+Ok, so now that you have an overall idea of my summer work, I will describe the details and decisions behind the lines of code written through these months.
 
 ## Previous State of ROOT
 
-Before GSoC17, ROOT had a good set of interfaces for fitting data; see, for example, the section [5. Fitting Histograms](https://root.cern.ch/root/htmldoc/guides/users-guide/ROOTUsersGuide.html#fitting-histograms) of the *User's Guide* to make an idea of what ROOT can do for you. However, these interfaces were tied to a specific base type; namely, they worked only with `double`s. Furthermore, the code was first designed to serve as a set of serial algorithms, and parallelization was not taken into account.
+Before GSoC17, ROOT had a good set of interfaces for fitting data; see, for example, the section [5. Fitting Histograms](https://root.cern.ch/root/htmldoc/guides/users-guide/ROOTUsersGuide.html#fitting-histograms) of the *User's Guide* to make an idea of what ROOT can do for you. However, these interfaces were tied to a specific base type; namely, they worked only with doubles. Furthermore, the code was first designed to serve as a set of serial algorithms, and parallelization was not taken into account.
 
 Considerable work has been done before the programme in order to generalize these interfaces and add the possibility to use other types and other execution policies. See, for example, the [`struct Evaluate`]((https://github.com/root-project/root/blob/master/math/mathcore/inc/Fit/FitUtil.h#L370)) in `FitUtil.h`, where the evaluations of `Chi2`, `LogLikelihood` and `PoissonLikelihood` functions were adapted to have vectorized and parallelized versions.
 
@@ -69,7 +69,7 @@ However, a lot more work in this direction needed to be done, and my summer has 
 
 ## Using The New Code
 
-Ok, so my code has nice tricky details and the commits I did on the PR are super cool, but before describing all the work that has been done, let's see how to use the new methods and the good results we can obtain.
+Ok, so we all know that my code has nice tricky details and the commits I did on the PRs are super cool, but before describing all the work that has been done, let's see how to use the new methods and the good results we can obtain.
 
 ### Gradient and Fitting Interfaces
 
@@ -87,7 +87,7 @@ static T modelFunction(const T *data, const double *params)
 }
 {% endhighlight %}
 
-First of all, you would need to create a `TF1` to hold your function with initial parameters and a `TH1` to hold your data (here we have randomised data generated from the model function). With the work done during the summer, you can now use data types different to double for your model functions, so let's use here `ROOT::Double_v`:
+First of all, you would need to create a `TF1` to hold your function with initial parameters and a `TH1` to hold your data ---here we have randomised data generated from the model function---. With the work done during the summer, you can now use data types other than `double` for your model functions, so let's use here `ROOT::Double_v`:
 
 {% highlight cpp %}
 // Create TF1 from model function and initialize the fit function
@@ -150,13 +150,13 @@ That this one last line works may seem trivial or unimportant, but it has been *
 
 ![Speedups](/assets/img/speedups.png)
 
-The orange bars show the speedup when using the parallel implementation. The yellow ones show the speedup of the vectorized implementations; to be more specific, this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the implementations that use both the parallel *and* vectorized techniques. As you can see, in the best case we can obtain evaluations 6 times faster than before.
+The orange bars show the speedup when using the parallel implementations. The yellow ones show the speedup of the vectorized implementations; to be more specific, this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the implementations that use both the parallel *and* vectorized techniques. As you can see, in the best case we can obtain evaluations 6 times faster than before.
 
 ## Dissecting the Commits
 
 ### Gradient and Fitting Interfaces
 
-That last graph was cool, but the work behind it was hard. Let us now describe with detail the main work of this project, implemented in [this PR](https://github.com/root-project/root/pull/793). Let's inspect every commit to see what I did and why:
+That last graph was cool, but the work behind it was hard. Let us now describe in detail the main work of this project, implemented in [this PR](https://github.com/root-project/root/pull/793). Let's inspect every commit to see what I did and why:
 
 * [Commit 16cbcb5 ](https://github.com/root-project/root/pull/793/commits/16cbcb5b3143f588bc01c06bc093192b236acad8): The very first commit I pushed to my ROOT fork implemented a parallelized version of the method `FitUtil::EvaluateChi2Gradient`. This was pretty direct, as I just had to add a new version of the method using the parallelization techniques provided by ROOT; in particular, `ROOT::TThreadExecutor::MapReduce`. This was implemented following the example of the method `FitUtil::EvaluateChi2`, which was already parallelized in the `Evaluate` struct. The finished implementation can be seen in the file `FitUtil.cxx`, method `FitUtil::EvaluateChi2Gradient`.
 * [Commit b705cf4 ](https://github.com/root-project/root/pull/793/commits/b705cf489f85d8151dd626f7c011fdfd76ce7b54): This commit implemented a really important work, as all the remaining commits depended greatly on it: the generalization of the gradient interfaces; namely:
@@ -178,14 +178,14 @@ this same member. Now, `GradientPar` modifies a *local* copy of `fParameters`. O
 
 ### Integrating Everything
 
-After the generalization of the gradient interfaces and the implementation of the gradient evaluation of the three main functions in the fitting algorithms, we still havae one thing to do: to integrate everything so that the user do not have to worry about the details behind the calls they make. And here it comes [one of the unmerged PRs](https://github.com/root-project/root/pull/890), where `ROOT::Fit::Fitter` is adapted so that it can work with functions with templated gradients. This way, the user will be able to call the `Fit` method, so that they have nothing to change in their code but it is still way more efficient.
+After the generalization of the gradient interfaces and the implementation of the gradient evaluation of the three main functions in the fitting algorithms, we still have one thing to do: to integrate everything so that the user do not have to worry about the details behind the calls they make. And here it comes [one of the unmerged PRs](https://github.com/root-project/root/pull/890), where `ROOT::Fit::Fitter` is adapted so that it can work with functions with templated gradients. This way, the user will be able to call the `Fit` method, so that they have nothing to change in their code but it is still way more efficient.
 
 Let's see the two unmerged commits to know how the integration is made:
 
 * [Commit df7bb2d](https://github.com/root-project/root/pull/890/commits/df7bb2ddbef22b943fc427d53513311303ee22f7): The main work of this PR is done here. In top of the `IGradModelFunction` used by the `Fitter` class, this commit adds a new `typedef` for the *vectorized* model functions with gradient: `IGradModelFunction_v`. The main changes can be found on `Fitter::DoLeastSquareFit`, `Fitter::DoBinnedLikelihoodFit` and `Fitter::DoUnbinnedLikelihoodFit`, that perform the fit using the now well-known classes `Chi2FCN`, `PoissonLikelihoodFCN` and `LogLikelihoodFCN`, respectively. Here, the commit adds one case uncovered until now: the case for vectorized functions with implementing the gradient interface. The new code handles the case calling the `*FCN` classes correspondingly, using the work done until now in the main PR.
 * [Commit 59e3fb9](https://github.com/root-project/root/pull/890/commits/59e3fb9044e41dc96c312180040602fed69b97f7): To check that the new code works, the scalar, vectorial, unbinned and binned fitting cases are tested here. These tests are the reason why the PR is still unmerged, as they expose one bug that make the unbinned fit test fail.
 
-Here we should also talk about one of the other unmerged PRs: [the one adding the padding to all vectors in FitData and its children](https://github.com/root-project/root/pull/896). `FitData` is basically a wrapper of an `std::vector`, and to ease the vectorization and the vectorized loops on the fitting data, this PR pushes a [single commit](https://github.com/root-project/root/pull/896/commits/d92fa845533c524e25009ec401db19efaddf4ff0) that generalizes the notion of padding to all coordinates, data and error vectors that are abstracted out by `FitData`, `BinData` and `UnBinData`. The idea behind this is to assure that the length of these vectors is always a multiple of the `SIMD` vector size, so that when we loop over them jumping as many elements as one vector can hold, we do not get into the terrifying world of uninitialised memory. This PR just adds a static function, `FitData::VectorPadding`, that computes the remaining of elements that should be artifiacilly added to a vector in order to have a length that is a multiple of the `SIMD` vector size. This function is then used throughout the initialising and resizing code of `FitData` and its children to ensure that everything is safe for the final user.
+Here we should also talk about one of the other merged PRs: [the one adding the padding to all vectors in FitData and its children](https://github.com/root-project/root/pull/896). `FitData` is basically a wrapper of an `std::vector`, and to ease the vectorization and the vectorized loops on the fitting data, this PR pushes a [single commit](https://github.com/root-project/root/pull/896/commits/d92fa845533c524e25009ec401db19efaddf4ff0) that generalizes the notion of padding to all coordinates, data and error vectors that are abstracted out by `FitData`, `BinData` and `UnBinData`. The idea behind this is to assure that the length of these vectors is always a multiple of the `SIMD` vector size, so that when we loop over them jumping as many elements as one vector can hold, we do not get into the terrifying world of uninitialised memory. This PR just adds a static function, `FitData::VectorPadding`, that computes the remaining of elements that should be artifiacilly added to a vector in order to have a length that is a multiple of the `SIMD` vector size. This function is then used throughout the initialising and resizing code of `FitData` and its children to ensure that everything is safe for the final user.
 
 ### Nice Touches
 
