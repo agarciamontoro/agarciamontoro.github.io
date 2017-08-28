@@ -150,7 +150,7 @@ That this one last line works may seem trivial or unimportant, but it has been *
 
 ![Speedups](/assets/img/speedups.png)
 
-The orange bars show the speedup when using the parallel implementation. The yellow ones show the speedup of the vectorized implementations; this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the parallel *and* vectorized implemetations,
+The orange bars show the speedup when using the parallel implementation. The yellow ones show the speedup of the vectorized implementations; to be more specific, this benchmark is done in a machine with the instruction set [`SSE4.2`](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions). Finally, the green bars show the speedups of the implementations that use both the parallel *and* vectorized techniques. As you can see, in the best case we can obtain evaluations 6 times faster than before.
 
 ## Dissecting the Commits
 
